@@ -118,9 +118,7 @@ flowchart TB
 ```
  
  
-```markdown
 ![VNet creation](./screenshots/01-vnet-creation-basics.png)
-```
  
 ---
  
@@ -143,10 +141,7 @@ Created the Virtual Network with two subnets — one for each tier.
    - `snet-web` → `10.0.1.0/24`
    - `snet-db` → `10.0.2.0/24`
 4. **Review + create → Create**.
-> **📸 Screenshot — `02-vnet-creation-basics.png`**
-> The "Basics" tab of the Create Virtual Network blade, showing the resource group and VNet name filled in.
- 
-> **📸 Screenshot — `03-vnet-subnet-config.png`**
+![Subnet creation](./screenshots/02-vnet-subnet-config.png)
 > The "IP Addresses" tab showing both subnets (`snet-web` and `snet-db`) with their CIDR ranges configured side by side.
  
 ### Phase 2: Deploying the Web Server
@@ -154,18 +149,15 @@ Created the Virtual Network with two subnets — one for each tier.
 Deployed the public-facing front-end VM into the public subnet.
  
 1. **Virtual Machines → Create.**
-2. **Basics:** Name `vm-web-01`, image Ubuntu Server 20.04 LTS, size `Standard_B1s`, key pair `key-lab02`.
+2. **Basics:** Name `vm-web-01`, image Ubuntu Server 20.04 LTS, size `Standard_D2s_v3`, key pair `key-lab02`.
 3. **Inbound ports:** Allow HTTP (80) and SSH (22).
 4. **Networking:** Subnet set to `snet-web`; Public IP set to Create New (Standard).
 5. **Review + create → Create**, download the `.pem` private key.
 > **📸 Screenshot — `04-webvm-basics.png`**
 > The "Basics" tab showing VM name, image, size, and key pair selection.
  
-> **📸 Screenshot — `05-webvm-networking.png`**
+![WebVM](./screenshots/05-webvm-networking.png)
 > The "Networking" tab confirming `snet-web` is selected and a new Public IP is being created.
- 
-> **📸 Screenshot — `06-webvm-overview-publicip.png`**
-> The deployed VM's Overview page, with the **Public IP address** and **Private IP address** fields visible (you'll need the public IP for SSH in Phase 4).
  
 ### Phase 3: Deploying the Database Server
  
@@ -176,13 +168,11 @@ Deployed the back-end VM into the private subnet — the critical step, since th
 3. **Inbound ports:** Allow only SSH (22) — no HTTP needed on the DB tier.
 4. **Networking (critical step):** Virtual Network `vnet-lab02`, Subnet changed to **`snet-db`**, Public IP set to **None**.
 5. **Review + create → Create**.
-> **📸 Screenshot — `07-dbvm-networking-subnet.png`**
-> The "Networking" tab with the Subnet dropdown explicitly showing `snet-db` selected — this is the screenshot that proves correct subnet placement.
  
-> **📸 Screenshot — `08-dbvm-no-publicip.png`**
+![Database VM](./screenshots/08-dbvm-no-publicip.png)
 > The same Networking tab with the Public IP field set to **None**, clearly visible — this is the core security control of the whole architecture.
  
-> **📸 Screenshot — `09-dbvm-private-ip.png`**
+![Databse private ip](./screenshots/09-dbvm-private-ip.png)
 > The deployed `vm-db-01` Overview page showing only a Private IP address (`10.0.2.4`) and no Public IP field populated.
  
 ### Phase 4: Validating Connectivity
@@ -199,10 +189,10 @@ Because `vm-db-01` has no public IP, it can't be reached directly from a home ne
    ping 10.0.2.4
 ```
 4. Successful replies confirm both VMs are reachable within the VNet. `Ctrl+C` to stop.
-> **📸 Screenshot — `10-ssh-into-webvm.png`**
+![SSH into Web](./screenshots/10-ssh-into-webvm.png)
 > Terminal showing the successful SSH login banner into `vm-web-01` (redact/blur the public IP if you want to keep it private).
  
-> **📸 Screenshot — `11-ping-success.png`**
+![Ping Success](./screenshots/11-ping-success.png)
 > Terminal output showing successful `ping 10.0.2.4` replies from inside the web server — this is the proof of cross-tier connectivity inside the VNet.
  
 ### Phase 5: Locking Down the Firewall (NSG)
@@ -224,13 +214,10 @@ At this point the DB server is reachable from anywhere inside the VNet — too p
    | Priority | 100 |
    | Name | `Allow-Web-Subnet` |
 4. Click **Add**.
-> **📸 Screenshot — `12-nsg-inbound-rules-before.png`**
-> The NSG's Inbound security rules list *before* adding the custom rule (shows default rules only).
- 
-> **📸 Screenshot — `13-nsg-allow-web-rule-form.png`**
+![NSG Allow](./screenshots/13-nsg-allow-web-rule-form.png)
 > The "Add inbound security rule" form fully filled out, matching the table above.
  
-> **📸 Screenshot — `14-nsg-inbound-rules-after.png`**
+![NSH rules after](./screenshots/14-nsg-inbound-rules-after.png)
 > The Inbound security rules list *after* the `Allow-Web-Subnet` rule is added, with its priority (100) and source range (`10.0.1.0/24`) visible.
  
 ---
@@ -250,9 +237,6 @@ At this point the DB server is reachable from anywhere inside the VNet — too p
 | Ping to `10.0.2.4` fails | `vm-db-01` deployed into the wrong subnet, or VMs in different VNets | Confirm `vm-db-01` is in `snet-db` and both VMs share `vnet-lab02` |
 | Can't SSH directly into `vm-db-01` from local machine | No public IP assigned (by design) | SSH into `vm-web-01` first, then reach the DB server from there |
  
-> **📸 Screenshot — (optional) `troubleshoot-example.png`**
-> If you hit either issue while building this, a quick screenshot of the error/fix is a nice addition to show real-world debugging — place it in this section.
- 
 ---
  
 ## Cleanup
@@ -265,7 +249,7 @@ Delete rg-lab02-[yourname]
  
 Deleting the resource group removes the VNet, both VMs, NSGs, and associated disks/IPs in one action.
  
-> **📸 Screenshot — `15-resource-group-cleanup.png`**
+![Resource group deleted](./screenshots/15-resource-group-cleanup.png)
 > The resource group's "Delete resource group" confirmation dialog, showing all resources slated for deletion.
  
 ---
@@ -287,9 +271,5 @@ Deleting the resource group removes the VNet, both VMs, NSGs, and associated dis
 - [ ] Add an **Application Security Group (ASG)** in place of raw CIDR ranges for more maintainable rules
 - [ ] Add a Network Security Group on the web subnet as well, scoping it to only HTTP/SSH
 - [ ] Layer in Azure Monitor / NSG Flow Logs for traffic visibility
----
- 
-**Author:** [Your Name]
-**Project Type:** Self-guided cloud networking lab
  
 
